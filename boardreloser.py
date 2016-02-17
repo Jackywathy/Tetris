@@ -179,7 +179,6 @@ class Board:
         self.write()
 
     def write(self, string = "l"):  # writes the self.xs and self.zero to self.list. putting in any string makes it silent
-        print("writing")
         #  first, destroy self.list
         self.create_list()
 
@@ -205,14 +204,12 @@ class Board:
                 self.relative.append((self.zero[0] - coordinate[0], coordinate[1] - self.zero[1]))
 
         # and then....
-        if self.hash:
-            self.hash_sort = copy.deepcopy(self.hash_original) # sets hash.sort back to a list of (normally 10) lists
-            for element in self.hash:
-                self.hash_sort[element[0]].append((element))   # regigers the self.hash_sort so it reflects self.hash
+
+
 
         # finally No.3, check if any rows are full!
         # TODO finish self.delete_rows(), only prints this row is full now.
-        self.delete_rows()
+
 
 
         #if string == "l":
@@ -328,6 +325,7 @@ class Board:
         if self.zero:
             self.hash.append(self.zero)
         self.delete_x()
+        self.delete_rows()
 
 
 
@@ -397,33 +395,43 @@ class Board:
             raise Exception ("WHAT THE HELLLE")
 
     def delete_rows(self):
+        # first create hash_sort form x.hash
+        self.hash_sort = copy.deepcopy(self.hash_original)
+        for element in self.hash:
+            self.hash_sort[element[0]].append(element)
+        del element
+
         row = - 1
         for element in self.hash_sort:
             row += 1
             if len(element) == 10:
+                print(element, "row" , row, "is full")
+                # increase the score by one
                 self.score += 1
+                # erase the row into a list
                 self.hash_sort[row] = []
-                self.hashsort_to_hash()
-                self.move_hash(row)
-                self.write("s")
+                #  now update self.hash from self.hash_sort
+                self.hash = []
+                for element5 in self.hash_sort:
+                    if element5:
+                        print(element5, "el5")
+                        for element6 in element5:
+                            self.hash.append(element6)
+                # then finally move all the hashes down
+                temp = []
+                for bar in self.hash:
+                    if bar[0] < row:
+                        temp.append((bar[0]+1, bar[1]))
+                    else:
+                        temp.append(bar)
+                self.hash = copy.deepcopy(temp)
 
-    def hashsort_to_hash(self): # converts hash_sort to hash
-        self.hash = []
-        for element in self.hash_sort:
-            if element:
-                for element2 in element:
-                    self.hash.append(element2)
+                # finally recreate hash_sort #again...
+                self.hash_sort = copy.deepcopy(self.hash_original)
+                for element2 in self.hash:
+                    self.hash_sort[element2[0]].append(element2)
+        self.write("s")
 
-    def move_hash(self, num):
-        row = -1
-        temp = []
-        for element in self.hash:
-            row += 1
-            if element[0] < num:
-                temp.append((element[0]+1, element[1]))
-            else:
-                temp.append(element)
-        self.hash = copy.deepcopy(temp)
 
 
 
