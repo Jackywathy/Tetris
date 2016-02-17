@@ -68,22 +68,9 @@ x = boardreloser.Board(20, 10)
 _square = pg.Rect(420,100, 100,30)
 
 def update_graphics():
-    if x.file == "1.txt":
-        box_color = yellow
-    elif x.file == "2.txt":
-        box_color = red
-    elif x.file == "3.txt":
-        box_color = pink
-    elif x.file == "4.txt":
-        box_color = plurple
-    elif x.file == "5.txt":
-        box_color = light_green
-    elif x.file == "6.txt":
-        box_color = dark_blue
-
-
-
-    else:
+    try:
+        box_color = x.colors[x.file]
+    except KeyError:
         box_color = black
 
 

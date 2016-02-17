@@ -1,17 +1,6 @@
 import random
 import copy
 
-#colors
-darkpurple = (36,7,41)
-white = (255,255,255)
-black = (0,0,0)
-yellow = (0,255,255)
-red = (255, 0 , 0)
-pink = (255, 0 ,255)
-plurple = (179,42,232)
-light_green = (11,255,44)
-dark_blue = (16,17,255)
-# colors
 
 def convert(list_of_tuples, zero):  # converts a relative value to an absolute one
     out = []
@@ -72,6 +61,15 @@ class Board:
         for item in range(self.rows):
             self.hash_sort.append([])
         self.hash_original = copy.deepcopy(self.hash_sort)
+        self.colors = {
+            "1.txt": (255,0,0),
+            "2.txt": (255,0,255),
+            "3.txt": (255,255,0),
+            "4.txt": (0,255,255),
+            "5.txt": (0,0,255),
+            "6.txt": (160,160,160),
+            "7.txt": (0,255,0)
+        }
         self.loadfile2()
 
 
