@@ -70,6 +70,9 @@ class Board:
             "6.txt": (160,160,160),
             "7.txt": (0,255,0)
         }
+
+
+
         self.loadfile2()
 
 
@@ -422,6 +425,7 @@ class Board:
                     else:
                         temp.append(bar)
                 self.hash = copy.deepcopy(temp)
+                del temp
 
                 # finally recreate hash_sort #again...
                 self.hash_sort = copy.deepcopy(self.hash_original)
