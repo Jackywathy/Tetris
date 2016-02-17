@@ -1,6 +1,6 @@
 import time, pygame as pg, os, boardreloser, sys
 from pygame.locals import *
-os.chdir("/Users/jackjiang/Desktop/Tetris")
+#os.chdir("/Users/jackjiang/Desktop/Tetris")
 
 gameover = False
 
