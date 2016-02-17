@@ -414,7 +414,6 @@ class Board:
                 self.hash = []
                 for element5 in self.hash_sort:
                     if element5:
-                        print(element5, "el5")
                         for element6 in element5:
                             self.hash.append(element6)
                 # then finally move all the hashes down
