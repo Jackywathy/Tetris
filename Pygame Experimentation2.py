@@ -164,19 +164,9 @@ while True:
                 update_graphics()
             elif event.key == K_SPACE or event.key == K_RETURN: # = space
                 pg.key.set_repeat()
-                _n = False
-                num = 0
-                while True:
-                    if x.check_touch():
-                        _n = True
-                    if _n:
-                        _n = False
-                        x.drop()
-                        pg.key.set_repeat(2)
-                        break
-
-                    x.drop()
+                x.drop_down()
                 update_graphics()
+                pg.key.set_repeat(2)
             elif event.key == K_s or event.key == K_DOWN: # s
                 x.drop()
                 update_graphics()

@@ -72,7 +72,6 @@ class Board:
         }
 
 
-
         self.loadfile2()
 
 
@@ -406,7 +405,6 @@ class Board:
         for element in self.hash_sort:
             row += 1
             if len(element) == 10:
-                print(element, "row" , row, "is full")
                 # increase the score by one
                 self.score += 1
                 # erase the row into a list
@@ -432,6 +430,16 @@ class Board:
                 for element2 in self.hash:
                     self.hash_sort[element2[0]].append(element2)
         self.write("s")
+
+    def drop_down(self):
+        _n = False
+        while True:
+            if self.check_touch():
+                _n = True
+            if _n:
+                self.drop()
+                break
+            self.drop()
 
 
 
