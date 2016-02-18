@@ -91,6 +91,7 @@ class Board:
 
         offset = int((self.columns - height)/2)
 
+
         # open file and put x's in it.
         with open(file) as f:
             row = -1
