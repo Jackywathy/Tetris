@@ -132,7 +132,7 @@ class Board:
                 if not self.legal(_xs):
                     self.drop()
                     self.write()
-                    return True
+                    return False
                 else:
                     self.xs = _xs
                     self.drop()
@@ -151,6 +151,7 @@ class Board:
             self.xs = _xs
             self.drop()
             self.zero = _zero
+            return True
 
 
         elif string == "l":
@@ -172,7 +173,7 @@ class Board:
                     return True
                 else:
                     self.write()
-                    return True
+                    return False
 
             _zero = (self.zero[0], self.zero[1] - 1)
             if not self.legal(_xs) or not self.legal(_zero):
@@ -181,12 +182,12 @@ class Board:
                 return False
             self.xs = _xs
             self.zero = _zero
+            self.drop()
+            return True
 
         else:
             return ("String must be 'r' or 'l', " + "not string")
-        self.drop()
-        self.write()
-        return True
+
 
     def write(self, string = "l"):  # writes the self.xs and self.zero to self.list. putting in any string makes it silent
         #  first, destroy self.list
@@ -239,6 +240,7 @@ class Board:
 
         # first first check if rotating is ok
         if not self.rotate_ok:
+            self.drop()
             self.write()
             return False
         # first create a temporary object and check if it is legal
@@ -258,12 +260,14 @@ class Board:
         _xs = convert(temp, self.zero)  # test if it works
         # print(temp, "|", _xs)
         if not self.legal(_xs):
+            self.drop()
             self.write()
             return False
 
         self.xs = _xs
-        #self.write()
+        self.drop()
         self.write()
+        return True
 
     def remove_x(self, tuple):
         el = -1

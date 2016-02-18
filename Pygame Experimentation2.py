@@ -1,4 +1,4 @@
-import time, pygame as pg, os, boardreloser, sys
+import time, pygame as pg, os, boardre, sys
 from pygame.locals import *
 #os.chdir("/Users/jackjiang/Desktop/Tetris")
 
@@ -63,7 +63,7 @@ picture = pg.transform.scale(picture, (135,90))
 
 
 #print(os.listdir())
-x = boardreloser.Board(20, 10)
+x = boardre.Board(20, 10)
 
 _square = pg.Rect(420,100, 100,30)
 
