@@ -129,22 +129,26 @@ class Board:
                 _xs.append((element[0], element[1] + 1))
             if not self.zero:
                 if not self.legal(_xs):
+                    self.drop()
                     self.write()
                     return True
                 else:
                     self.xs = _xs
+                    self.drop()
                     self.write()
                     return True
 
 
             _zero = (self.zero[0], self.zero[1] + 1)
             if not self.legal(_xs) or not self.legal(_zero):
+                self.drop()
                 self.write()
                 return False
 
 
 
             self.xs = _xs
+            self.drop()
             self.zero = _zero
 
 
@@ -155,12 +159,14 @@ class Board:
             for element in self.xs:
                 _xs.append((element[0], element[1] - 1))
                 if element[1] - 1 == - 1: # make sure the tetromeno doesnt go through the board
+                    self.drop()
                     self.write()
                     return False
 
             if not self.zero:
                 if self.legal(_xs):
                     self.xs = _xs
+                    self.drop()
                     self.write()
                     return True
                 else:
@@ -169,6 +175,7 @@ class Board:
 
             _zero = (self.zero[0], self.zero[1] - 1)
             if not self.legal(_xs) or not self.legal(_zero):
+                self.drop()
                 self.write()
                 return False
             self.xs = _xs
@@ -176,7 +183,7 @@ class Board:
 
         else:
             return ("String must be 'r' or 'l', " + "not string")
-
+        self.drop()
         self.write()
         return True
 
