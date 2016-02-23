@@ -31,7 +31,6 @@ class Board:
         self.columns = width  # width of the board. Never changed
         self.rows = height  # height of the board. Never changed
         self.file = None  # which tetris piece is loaded
-    
         #
         #
         #
@@ -92,7 +91,6 @@ class Board:
 
         offset = int((self.columns - height)/2)
 
-
         # open file and put x's in it.
         with open(file) as f:
             row = -1
@@ -131,20 +129,16 @@ class Board:
                 _xs.append((element[0], element[1] + 1))
             if not self.zero:
                 if not self.legal(_xs):
-                    self.drop()
                     self.write()
-                    return False
+                    return True
                 else:
                     self.xs = _xs
-                    self.drop()
                     self.write()
                     return True
 
-            print("ZERO")
+
             _zero = (self.zero[0], self.zero[1] + 1)
-            print(_zero, 'init')
             if not self.legal(_xs) or not self.legal(_zero):
-                self.drop()
                 self.write()
                 return False
 
@@ -152,8 +146,6 @@ class Board:
 
             self.xs = _xs
             self.zero = _zero
-            self.drop()
-            return True
 
 
         elif string == "l":
@@ -163,33 +155,30 @@ class Board:
             for element in self.xs:
                 _xs.append((element[0], element[1] - 1))
                 if element[1] - 1 == - 1: # make sure the tetromeno doesnt go through the board
-                    self.drop()
                     self.write()
                     return False
 
             if not self.zero:
                 if self.legal(_xs):
                     self.xs = _xs
-                    self.drop()
                     self.write()
                     return True
                 else:
                     self.write()
-                    return False
+                    return True
 
             _zero = (self.zero[0], self.zero[1] - 1)
             if not self.legal(_xs) or not self.legal(_zero):
-                self.drop()
                 self.write()
                 return False
             self.xs = _xs
             self.zero = _zero
-            self.drop()
-            return True
 
         else:
             return ("String must be 'r' or 'l', " + "not string")
 
+        self.write()
+        return True
 
     def write(self, string = "l"):  # writes the self.xs and self.zero to self.list. putting in any string makes it silent
         #  first, destroy self.list
@@ -242,7 +231,6 @@ class Board:
 
         # first first check if rotating is ok
         if not self.rotate_ok:
-            self.drop()
             self.write()
             return False
         # first create a temporary object and check if it is legal
@@ -262,14 +250,12 @@ class Board:
         _xs = convert(temp, self.zero)  # test if it works
         # print(temp, "|", _xs)
         if not self.legal(_xs):
-            self.drop()
             self.write()
             return False
 
         self.xs = _xs
-        self.drop()
+        #self.write()
         self.write()
-        return True
 
     def remove_x(self, tuple):
         el = -1
