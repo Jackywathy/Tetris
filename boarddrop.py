@@ -139,8 +139,9 @@ class Board:
                     self.write()
                     return True
 
-
+            print("ZERO")
             _zero = (self.zero[0], self.zero[1] + 1)
+            print(_zero, 'init')
             if not self.legal(_xs) or not self.legal(_zero):
                 self.drop()
                 self.write()
@@ -149,8 +150,8 @@ class Board:
 
 
             self.xs = _xs
-            self.drop()
             self.zero = _zero
+            self.drop()
             return True
 
 

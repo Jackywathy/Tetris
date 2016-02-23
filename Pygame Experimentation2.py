@@ -24,6 +24,10 @@ fontObj = pg.font.Font("freesansbold.ttf", 35)
 
 
 
+pg.mixer.music.load("Tetris.ogg")
+pg.mixer.music.play(-1)
+
+
 
 def show_score():
     global screen
@@ -118,7 +122,7 @@ y = 0
 while True:
     # noinspection PyRedeclaration
     fps = (fpsClock.get_fps())
-    fpsClock.tick(20)
+    fpsClock.tick(10)
     # draw.rect(screen, color, (wdith from left side, width from top side, width of rect, height of rect
     y += 1
     if y > 15:
@@ -141,6 +145,7 @@ while True:
 
     #pygame.draw.rect(screen,(255,0,0),
     pg.display.update()
+    pg.key.set_repeat(2)
     for event in pg.event.get():
         if event.type == KEYDOWN:
             if event.key == 27:
@@ -163,7 +168,6 @@ while True:
                 x.rotate("r")
                 update_graphics()
             elif event.key == K_SPACE or event.key == K_RETURN: # = space
-                pg.key.set_repeat()
                 x.drop_down()
                 update_graphics()
                 pg.key.set_repeat(2)
