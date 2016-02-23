@@ -1,6 +1,5 @@
 import boarddrop as game
 import copy
-import itertools
 board = game.Board(20,10)
 
 def lines_fill(board_item):
@@ -83,7 +82,7 @@ def one_move():
     print(board)
 
 def detect_unfillable():
-
+    pass
 
 while True:
     put = input("")
