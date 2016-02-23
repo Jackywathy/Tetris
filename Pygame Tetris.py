@@ -45,7 +45,7 @@ def show_score():
     pg.display.update()
     time.sleep(2)
 
-
+pg.mouse.set_visible(False)
 pg.display.set_caption("Tetris")
 fpsClock = pg.time.Clock()
 screen = pg.display.set_mode((500, 700))

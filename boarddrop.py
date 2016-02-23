@@ -31,7 +31,7 @@ class Board:
         self.columns = width  # width of the board. Never changed
         self.rows = height  # height of the board. Never changed
         self.file = None  # which tetris piece is loaded
-    
+
         #
         #
         #

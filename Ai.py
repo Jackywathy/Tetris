@@ -35,7 +35,7 @@ def move_test(board_object):
         after_score = board3.score
         if after_score - before_score > 0:
             print('line cleared')
-            point += 100
+            point += 100 * (after_score - before_score)
         for element in board3.hash_sort:
             if element:
                 point += av_square(len(element))
