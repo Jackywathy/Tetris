@@ -139,10 +139,7 @@ class Board:
                     self.drop()
                     self.write()
                     return True
-
-            print("ZERO")
             _zero = (self.zero[0], self.zero[1] + 1)
-            print(_zero, 'init')
             if not self.legal(_xs) or not self.legal(_zero):
                 self.drop()
                 self.write()
@@ -457,7 +454,20 @@ class Board:
                 break
             self.drop()
 
+    def drop_not(self):
+        _n = False
+        while True:
+            if self.check_touch():
+                _n = True
+            if _n:
+                self.drop()
+                break
 
+    def __repr__(self):
+        out = ""
+        for line in self.list:
+            out += "".join(line) + "|"
+        return out
 
 
 
