@@ -18,6 +18,7 @@ def plus_tuple(tuple, origin):
 class Board:
     def __init__(self, height, width):  # creates the board, with height and width
         # create some attributes
+        self.current = 0
         self.gameover = False
         self.score = 0
         self.randlist = []  # a list containing all the .txts to load
@@ -47,6 +48,13 @@ class Board:
             "6.txt","6.txt","6.txt","6.txt",
             "7.txt","7.txt","7.txt","7.txt"
             ]
+        #
+        #TEMP!!!
+        temp = ["5.txt"]*28
+
+        #
+
+
         all = 28
         for i in range(all):
             all -= 1
@@ -454,6 +462,16 @@ class Board:
                 break
             self.drop()
 
+    def drop_down_less(self):
+        """Drops down to one below the bottom"""
+        _n = False
+        while True:
+            if self.check_touch():
+                _n = True
+            if _n:
+                break
+            self.drop()
+
     def drop_not(self):
         _n = False
         while True:
@@ -468,6 +486,19 @@ class Board:
         for line in self.list:
             out += "".join(line) + "|"
         return out
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.current >= self.rows:
+            raise StopIteration
+        else:
+            self.current += 1
+            return self.list[self.current-1]
+
+    def __getitem__(self, item):
+        return self.list[item]
 
 
 
