@@ -119,7 +119,7 @@ y = 0
 norotate = 0 # frames before being allowed to rotate
 nospam = 0 # frames before being allowed to press space again
 
-pg.key.set_repeat(1,100)
+pg.key.set_repeat(2,100)
 while True:
 
     # noinspection PyRedeclaration
@@ -161,7 +161,7 @@ while True:
                 x.rotate("l")
                 update_graphics()
                 norotate = 5
-            elif event.key == K_l or event.key == K_e: # = e
+            elif event.key == K_l or event.key == K_e or event.key == K_UP:  # = e
                 if norotate:
                     print("nope")
                     continue
