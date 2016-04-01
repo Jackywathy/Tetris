@@ -1,20 +1,29 @@
 import boarddrop as game
 import copy
-import re
 from operator import itemgetter
 import time
+import regex
+# this is the 'new' regex module with overlapping support
 import sys
 
-board = game.Board(20,10)
-stuck = re.compile(r'#.{9}(#|\|)\.#')
-stuck2 = re.compile(r'#.{9}#')
-stuck3 = re.compile(r'#.{11}#')
-no_space = re.compile(r'#.{10}\.')
-block_top = re.compile(r'#.{10}')
-side1 = re.compile(r'#\|')
-side2 = re.compile(r'\|#')
-stuck4 = re.compile(r'#(.{10}){2-4}\.')
-no_space_above = re.compile(r'#.{10}\.')
+board = game.Board(20,10)               #
+full_stuck = regex.compile(r'#.{9}#\.(#|\|)')  #.#       #?
+stuck_left = regex.compile(r'#.{9}#\.')              #.?
+stuck_right = regex.compile(r'#.{10}\.#')
+
+side1 = regex.compile(r'#\|')
+side2 = regex.compile(r'\|#')
+                                         #
+hanging = regex.compile(r'#.{10}\.') #     .
+
+stuck_more = regex.compile(r'#(.{10}){2,}')
+
+sideLeft = regex.compile(r'\|\.{1,4}#')
+sideRight = regex.compile(r'\.{1,4}|')
+
+
+
+
 
 
 def continuous(board_object):
@@ -37,10 +46,10 @@ def continuous(board_object):
                 items = 0
         if items:
             all_results.append(items)
-        print(all_results)
+
         for i in all_results:
             if i-3 > 0:
-                ret += i**2
+                ret += i**4
         return ret
 
 
@@ -48,20 +57,16 @@ def continuous(board_object):
 def detect_unfillable(board_object):
     out = 0
     w = (repr(board_object))
-    if (stuck.findall(w)):
-        out += (len(stuck.findall(repr(board_object)))*50)
-        #print("ARRGE BAD ERRO, r, unfillable detected. losing 50 poijnts")
-    if no_space.findall(w):
-        out += (len(no_space.findall(w))*10)
-        #print("no space, losing", (len(no_space.findall(w))*20) ,"points")
-    out += len(no_space_above.findall(repr(board_object))) * 50
-    if (no_space_above.findall(repr(board_object))):
-        print('nospace')
-    out += len(stuck2.findall(repr(board_object))) * 50
-    out += len(stuck3.findall(repr(board_object))) * 50
-    if stuck4.findall(w):
-        print("multistuck")
-        out += (len(no_space.findall(w))*100)
+    out += len(full_stuck.findall(w, overlapped=True))*50
+    out += len(hanging.findall(w, overlapped=True))*20
+    out += len(stuck_right.findall(w, overlapped=True)) * 30
+    out += len(stuck_left.findall(w, overlapped=True)) * 30
+    out += len(stuck_more.findall(w, overlapped=True)) * 50
+    out += len(sideLeft.findall(w, overlapped=True)) * 20
+    out += len(sideRight.findall(w, overlapped=True)) * 20
+
+
+
     #print("losing", out, 'Points because of RE"s!')
     return out
 
@@ -80,6 +85,7 @@ def lines_fill(board_item):
         if item:
             total += 1
             point += 5
+
     return point
 
 def av_square(board_object):
@@ -93,12 +99,17 @@ def av_square(board_object):
 
     return ret
 
+
+def way_out(board_object):
+    pass
+
+
 def compare_score(board_object, score):
     """Compares the original score with the score of the board_object given. Returns 100*line difference"""
     assert type(board_object) == game.Board
     assert type(score) == int
 
-    return board_object.score - score * 100
+    return (board_object.score - score) * 500
 
 def do_test(test, before_score=0):
     """Run all tests with the board object"""
@@ -132,17 +143,11 @@ def wiggle(board_object, move_direction, move_number, rotate_direction, rotate_n
     """Given a board object, wiggles it left and right and returns a list of lists of data"""
     test = copy.deepcopy(board_object)
     if type(move_number) == int:
-        for i in range(int(move_number)):
-            test.move(move_direction)
-
         moveall = str(move_direction) + str(move_number)
     else:
         moveall = None
 
     if type(rotate_number) == int:
-        for i in range(int(rotate_number)):
-            test.rotate(rotate_direction)
-
         rotateall = str(rotate_direction) + str(rotate_number)
     else:
         rotateall = None
@@ -150,6 +155,12 @@ def wiggle(board_object, move_direction, move_number, rotate_direction, rotate_n
     test1 = copy.deepcopy(test)
     test.move('l')
     test1.move('r')
+    if not test.just_solid:
+        test.drop_down()
+    if not test1.just_solid:
+        test1.drop_down()
+
+
     return [[do_test(test, before_score), moveall, rotateall, "l", True],
             [do_test(test1, before_score), moveall, rotateall, "r", True]]
 
@@ -173,7 +184,6 @@ def move_test(original):
     temp.drop_down()
     final = do_test(temp,before_score)
     allpoints.append([final,None,None,None,False])
-    print(temp,before_score, final,"ALLTEMPS WRONG")
 
     #
     for i in range(1,4): #rotates it left thrice
@@ -297,8 +307,7 @@ def do_formula(values):
     print(values)
     assert type(values) == list
     assert len(values) == 5
-    print("BEFORE")
-    print(board)
+
     if values[1]:
         for i in range(int(values[1][1])):
             board.move(values[1][0])
@@ -328,7 +337,8 @@ while True:
     bigNoMove = max(noMove,key=itemgetter(0))
     print('--List--')
     for i in z:
-        print(i)
+        if i:
+            print(i)
     print("--list--")
     print("largest no wiggle",bigNoMove)
     print("largest wiggle", big)
@@ -341,7 +351,8 @@ while True:
 
 
     if w:
-        break
+        pass
     w = True
-    time.sleep(1)
+    #break
+    time.sleep(0.11)
 

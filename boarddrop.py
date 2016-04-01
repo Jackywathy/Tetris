@@ -32,6 +32,7 @@ class Board:
         self.columns = width  # width of the board. Never changed
         self.rows = height  # height of the board. Never changed
         self.file = None  # which tetris piece is loaded
+        self.just_solid = False
 
         #
         #
@@ -49,8 +50,6 @@ class Board:
             "7.txt","7.txt","7.txt","7.txt"
             ]
         #
-        #TEMP!!!
-        temp = ["5.txt"]*28
 
         #
 
@@ -312,6 +311,7 @@ class Board:
 
     def drop(self):  # drop the tetromeno down by ONE
         # create a copy of .xs
+        self.just_solid = False
         _xs = []
         for element in self.xs:
             _xs.append((element[0] + 1, element[1]))
@@ -347,6 +347,7 @@ class Board:
             self.hash.append(self.zero)
         self.delete_x()
         self.delete_rows()
+        self.just_solid = True
 
 
 
