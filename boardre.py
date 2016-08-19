@@ -27,6 +27,7 @@ class BetterBoard:
     Moving = 'x'
     Middle = '0'
     Solid = '#'
+
     bag = [
         "1.txt","1.txt","1.txt","1.txt",
         "2.txt","2.txt","2.txt","2.txt",
@@ -69,6 +70,7 @@ class BetterBoard:
         self.file = []          # which tetris piece is loaded
         self.board = twoDimArray(width,height, start=BetterBoard.Empty) # type: twoDimArray
         self.color_dict = {}
+        self.full_line = ["#"] * width
 
     def populate_rand(self):
         while len(self.randlist) < self.maxqueue:
@@ -183,12 +185,20 @@ class BetterBoard:
             self.add_hash(self.zero)
             self.zero = ()
         self.xs = set()
+        self.delete_rows()
+
+    def delete_rows(self):
+        for line in self.board.getArray():
+            if line == self.full_line:
+                print("IJFLAJFKLASJLFJALSJKLFJLASJFJLASJFL")
+
 
     def regenerate_board(self):
         """
         Force Regens the board
         :return: NoneType
         """
+        print("ONLY FOR DEBUGGIN!")
         rows = range(self.rows)
 
         for row_num in rows:
@@ -297,7 +307,7 @@ class BetterBoard:
             self.remove_item(self.zero)
             block_color = self.color_dict.pop(self.zero)
             self.color_dict[new_zero] = block_color
-            self.add_moving(new_zero, BetterBoard.Middle)
+            self.add_middle(new_zero)
         for i in new_xs:
             self.add_moving(i)
             self.color_dict[i] = block_color
@@ -306,7 +316,10 @@ class BetterBoard:
         # TODO REMOVE!
         self.display()
 
-
+    def drop_down(self):
+        oldlen = len(self.hash)
+        while len(self.hash) == oldlen:
+            self.drop()
 
 
 if __name__ == '__main__':

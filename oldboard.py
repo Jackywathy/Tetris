@@ -8,8 +8,8 @@ class Board:
         self.rotate_ok = False # is this item eligable for rotating?
         self.hash = []  # where hashes are, it should never be erased. NEVER!
         self.zero = ()  # where zero is, erased every time something is moved.
-        self.list = []  # list representation of the board, with every element put in. Erased every .write()
-        self.xs = []  # where x's are on the board, represented as tuples coordinates. Is erased with zero
+        self.list = []  # list representation of the board, w
+        self.xs = []  # where x's are on the board, representith every element put in. Erased every .write()ed as tuples coordinates. Is erased with zero
         self.relative = []  # where x's are relative to self.zero. Created every time a new file is loaded
         self.columns = width  # width of the board. Never changed
         self.rows = height  # height of the board. Never changed

@@ -70,15 +70,12 @@ picture = pg.transform.scale(picture, (135,90))
 
 
 #print(os.listdir())
-x = boardre.Board(20, 10)
+x = boardre.BetterBoard(10, 20)
 
 _square = pg.Rect(420,100, 100,30)
 
 def update_graphics():
-    try:
-        box_color = x.colors[x.file]
-    except KeyError:
-        box_color = black
+    box_color = black
 
 
 
@@ -92,7 +89,7 @@ def update_graphics():
 
     screen.fill(white, inside_border)
     height1 = -2
-    for element in x.list:
+    for element in x.board.array:
         height1 += 32
         width1 = 58
         for element2 in element:
