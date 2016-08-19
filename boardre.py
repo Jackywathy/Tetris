@@ -75,7 +75,6 @@ class BetterBoard:
             if not self.bag:
                 self.bag = copy.deepcopy(BetterBoard.bag)
             rani = random.randint(0,len(self.bag)-1)
-            print(rani)
             self.randlist.append(
                 self.bag.pop(rani)
 
@@ -172,10 +171,6 @@ class BetterBoard:
         self.display()
         print()
 
-
-
-
-
     def regenerate_board(self):
         """
         Force Regens the board
@@ -197,55 +192,98 @@ class BetterBoard:
             print(i)
 
     def remove_item(self, xy):
+        """Removes the item from board"""
         self.board.set_tuple_item(BetterBoard.Empty, xy)
 
+    def add_item(self,xy,item=Moving):
+        """Adds the item to the board"""
+        self.board.set_tuple_item(item, xy)
 
-    def rotate(self, dir):
+    def rotate(self, dir='r'):
         """
         Rotates the pieces around
         :type dir: string
         """
         if not self.can_rotate or not self.zero:
             return "RET"
-        # first make self.relative, a list that shows x's relative to
-        print(self.xs, self.zero, self.can_rotate)
+        # first make self.relative, a list that shows x's relative to ! YAY FOR SET COMPREHENSION!
         relative = [(coordinate[0] - self.zero[0], coordinate[1] - self.zero[1]) for coordinate in self.xs]
-        print(relative)
         if dir == 'l':
-            new_xs = [better_convert((item[1], -item[0]), self.zero) for item in relative]
-            print(new_xs)
+            new_xs = {better_convert((item[1], -item[0]), self.zero) for item in relative}
         elif dir == 'r':
-            new_xs = [better_convert((-item[1], item[0]), self.zero) for item in relative]
-            print(new_xs)
+            new_xs = {better_convert((-item[1], item[0]), self.zero) for item in relative}
         else:
             raise Exception("Accepts only 'r' or 'l', not " + dir)
         if not self.legal(new_xs):
             return
-        else:
-            # it's all LEGAL! - remove everything!
-            for i in self.xs:
-                self.remove_item(i)
-                block_color = self.color_dict.pop(i)
 
-            for i in new_xs:
-                43uju77
-
-
+        # it's all LEGAL! - remove everything!
+        for i in self.xs:
+            self.remove_item(i)
+            block_color = self.color_dict.pop(i)
+        for i in new_xs:
+            self.add_item(i)
+            self.color_dict[i] = block_color
+        self.xs = new_xs
 
     def legal(self, list_of_tuples):
-        if type(list_of_tuples) == list:
+        if type(list_of_tuples) == set:
             for element in list_of_tuples:
-                if element[0] >= self.columns or element[1] >= self.rows:  # list[10] = 11th element, therefore must be smaller
+                if element[0] >= self.columns or element[1] >= self.rows:
+                    # list[10] = 11th element, therefore must be smaller
                     return False
                 if element in self.hash: # if it hits a hash element
                     return False
                 if element [0] < 0 or element[1] < 0: # if it is above/ under
                     return False
-            # if it passes every thest
+            return True
+
+        elif type(list_of_tuples) == tuple:
+            if list_of_tuples[0] >= self.columns or list_of_tuples[1] >= self.rows:
+                return False
+            if list_of_tuples in self.hash:  # if it hits a hash element
+                return False
+            if list_of_tuples[0] < 0 or list_of_tuples[1] < 0:  # if it is above/ under
+                return False
             return True
         else:
-            raise ValueError ("Here")
+            raise ValueError ("NOT A LIST?")
 
+    def move(self, dir='r'):
+        if not self.can_rotate or not self.zero:
+            return "RET"
+        if dir == 'l':
+            new_xs = {(item[0]-1, item[1]) for item in self.xs}
+            if self.zero:
+                new_zero = self.zero[0]-1, self.zero[1]
+        elif dir == 'r':
+            new_xs = {(item[0]+1, item[1]) for item in self.xs}
+            if self.zero:
+                new_zero = self.zero[0]+1, self.zero[1]
+        else:
+            raise Exception("Accepts only 'r' or 'l', not " + dir)
+        print(new_xs, new_zero)
+        if not self.legal(new_xs):
+            return "UIN:G"
+        if self.zero:
+            if not self.legal(new_zero):
+                return "BAZRO"
+
+        for i in self.xs:
+            self.remove_item(i)
+            block_color = self.color_dict.pop(i)
+        if self.zero:
+            self.remove_item(self.zero)
+            block_color = self.color_dict.pop(self.zero)
+            self.color_dict[new_zero] = block_color
+            self.add_item(new_zero, BetterBoard.Middle)
+        for i in new_xs:
+            self.add_item(i)
+            self.color_dict[i] = block_color
+        self.xs = new_xs
+        self.zero = new_zero
+        # TODO REMOVE!
+        self.display()
 
 
 if __name__ == '__main__':
