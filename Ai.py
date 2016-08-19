@@ -6,8 +6,8 @@ import regex
 # this is the 'new' regex module with overlapping support
 import sys
 
-board = game.Board(20,10)               #
-full_stuck = regex.compile(r'#.{9}#\.(#|\|)')  #.#       #?
+board = game.Board(18, 10)               #
+full_stuck = regex.compile(r'#.{9}(#|\|)\.(#|\|)')  #.#       #?
 stuck_left = regex.compile(r'#.{9}#\.')              #.?
 stuck_right = regex.compile(r'#.{10}\.#')
 
@@ -16,10 +16,15 @@ side2 = regex.compile(r'\|#')
                                          #
 hanging = regex.compile(r'#.{10}\.') #     .
 
-stuck_more = regex.compile(r'#(.{10}){2,}')
+hangingtwo = regex.compile(r'#(.{10}\.){2}\.')
+hangingthree = regex.compile(r'#(.{10}\.){3}\.')
+hangingfour = regex.compile(r'#(.{10}\.){4,}\.')
+hangingno = regex.compile(r'#(.{10}\.){5,}\.')
 
-sideLeft = regex.compile(r'\|\.{1,4}#')
-sideRight = regex.compile(r'\.{1,4}|')
+sideLeft = regex.compile(r'\|\.{1}#')
+sideRight = regex.compile(r'#(\.){1}\|')
+
+tunnel = regex.compile(r'((x|\|)\.(x|\|).{8}){3,}')
 
 
 
@@ -30,40 +35,40 @@ def continuous(board_object):
     """Gives more points depending on how continuous the lines are. If a line has"""
     ret = 0
     for line in board_object:
-        isLine = False
-        items = 0
         all_results = []
+        consec = False
+        items = 0
         for letter in line:
-            if letter == "#" and isLine:
+            if letter == "#" and consec:
                 items += 1
             elif letter == "#":
                 items += 1
-                isLine = True
+                consec = True
             else:
-                isLine = False
+                consec = False
                 if items:
                     all_results.append(items)
                 items = 0
-        if items:
-            all_results.append(items)
-
-        for i in all_results:
-            if i-3 > 0:
-                ret += i**4
-        return ret
+        if all_results:
+            ret += max(all_results)
+    return ret
 
 
 
 def detect_unfillable(board_object):
     out = 0
     w = (repr(board_object))
-    out += len(full_stuck.findall(w, overlapped=True))*50
-    out += len(hanging.findall(w, overlapped=True))*20
-    out += len(stuck_right.findall(w, overlapped=True)) * 30
-    out += len(stuck_left.findall(w, overlapped=True)) * 30
-    out += len(stuck_more.findall(w, overlapped=True)) * 50
-    out += len(sideLeft.findall(w, overlapped=True)) * 20
-    out += len(sideRight.findall(w, overlapped=True)) * 20
+    out += len(full_stuck.findall(w, overlapped=True))*100
+    out += len(hanging.findall(w, overlapped=True))*10
+    out += len(stuck_right.findall(w, overlapped=True)) * 20
+    out += len(stuck_left.findall(w, overlapped=True)) * 20
+    out += len(hangingtwo.findall(w, overlapped=True)) * 100
+    out += len(hangingthree.findall(w, overlapped=True)) * 250
+    out += len(hangingfour.findall(w, overlapped=True)) * 500
+    out += len(hangingno.findall(w, overlapped=True)) * 1000000
+
+    #out += len(sideLeft.findall(w, overlapped=True)) * 10
+    #out += len(sideRight.findall(w, overlapped=True)) * 10
 
 
 
@@ -74,28 +79,25 @@ def detect_unfillable(board_object):
 def detect_side(board_item):
     """Looks for hash tags that are the side of the board"""
     assert type(board_item) == game.Board
-    return len(side1.findall(repr(board_item)))+len(side2.findall(repr(board_item)))
+    return (len(side1.findall(repr(board_item)))+len(side2.findall(repr(board_item))) * 10)
 
 def lines_fill(board_item):
     """finds how many lines of the tetris board is being used, losing 5 points for each line occupied"""
     assert type(board_item) == game.Board
-    total = 0
     point = 0
     for item in board_item.hash_sort:
         if item:
-            total += 1
-            point += 5
+            point += (19-item[0][0]) * 5
 
     return point
 
 def av_square(board_object):
-    """Given a board_object, loop through each line, looking for lines that are more filled"""
+    """Given a board_object, loop through each line, looking for lines that are more filled. Each line"""
     assert type(board_object) == game.Board
     ret = 0
     for line in board_object.hash_sort:
         if line:
-            if len(line)-3>0:
-                ret += (len(line)-3)**2
+            ret = int((len(line)**2)/10)
 
     return ret
 
@@ -109,18 +111,18 @@ def compare_score(board_object, score):
     assert type(board_object) == game.Board
     assert type(score) == int
 
-    return (board_object.score - score) * 500
+    return (board_object.score - score) * 1000
 
 def do_test(test, before_score=0):
     """Run all tests with the board object"""
     assert type(test) == game.Board
     assert type(before_score) == int
     point = 0
-    #
+    #lose 1 point for every item in row 18, 2 points for row 17.....
     point -= lines_fill(test)
-    #
+    #300 points per line clear
     point += compare_score(test,before_score)
-    #
+    #finds number of # in each line, adding the ^2 of -2 of that line
     point += av_square(test)
     #
     point -= detect_unfillable(test)
@@ -324,6 +326,7 @@ def do_formula(values):
         board.drop_down()
     print("After")
     print(board)
+    #print(repr(board))
 
 w = 0
 while True:
@@ -352,7 +355,9 @@ while True:
 
     if w:
         pass
+        #break
     w = True
-    #break
-    time.sleep(0.11)
-
+    try:
+        time.sleep(1)
+    except:
+        break

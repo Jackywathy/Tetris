@@ -50,6 +50,7 @@ class Board:
             "7.txt","7.txt","7.txt","7.txt"
             ]
         #
+        #temp = ['5.txt']*14 + ['7.txt'] * 14
 
         #
 
@@ -500,7 +501,4 @@ class Board:
 
     def __getitem__(self, item):
         return self.list[item]
-
-
-
 

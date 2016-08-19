@@ -1,448 +1,277 @@
 import random
 import copy
+from collections import deque
+from Board import twoDimArray
+try:
+    import LOGGER
+    log = True
+except ImportError:
+    log = False
 
 
-def convert(list_of_tuples, zero):  # converts a relative value to an absolute one
+def convert(list_of_tuples, zero):  #
+    """converts a relative value to zero to an absolute one"""
     out = []
     for i in list_of_tuples:
         out.append(plus_tuple(i, zero))
     return out
 
-
+def better_convert(xy, zero):
+    return xy[0] + zero[0], xy[1] + zero[1]
 def plus_tuple(tuple, origin):
     return ((origin[0] + tuple[0] * -1, origin[1] + tuple[1]))
 
 
+class BetterBoard:
+    Empty = "."
+    Moving = 'x'
+    Middle = '0'
+    Solid = '#'
+    bag = [
+        "1.txt","1.txt","1.txt","1.txt",
+        "2.txt","2.txt","2.txt","2.txt",
+        "3.txt","3.txt","3.txt","3.txt",
+        "4.txt","4.txt","4.txt","4.txt",
+        "5.txt","5.txt","5.txt","5.txt",
+        "6.txt","6.txt","6.txt","6.txt",
+        "7.txt","7.txt","7.txt","7.txt"
+    ]
 
+    Colors = {
+        "1.txt": (255,0,0),
+        "2.txt": (255,0,255),
+        "3.txt": (255,255,0),
+        "4.txt": (0,255,255),
+        "5.txt": (0,0,255),
+        "6.txt": (160,160,160),
+        "7.txt": (0,255,0)
+    }
 
-class Board:
-    def __init__(self, height, width):  # creates the board, with height and width
+    def __init__(self, width, height, maxqueue = 3):
         # create some attributes
         self.gameover = False
         self.score = 0
-        self.randlist = []  # a list containing all the .txts to load
-        self.hash_sort = []
-        self.rotate_ok = False # is this item eligable for rotating?
-        self.hash = []  # where hashes are, it should never be erased. NEVER!
-        self.zero = ()  # where zero is, erased every time something is moved.
-        self.list = []  # list representation of the board, with every element put in. Erased every .write()
-        self.xs = []  # where x's are on the board, represented as tuples coordinates. Is erased with zero
-        self.relative = []  # where x's are relative to self.zero. Created every time a new file is loaded
-        self.columns = width  # width of the board. Never changed
-        self.rows = height  # height of the board. Never changed
-        self.file = None  # which tetris piece is loaded
-        #
-        #
-        #
-        #
-        # creates the random list
-        self.randlist = []
-        temp = [
-            "1.txt","1.txt","1.txt","1.txt",
-            "2.txt","2.txt","2.txt","2.txt",
-            "3.txt","3.txt","3.txt","3.txt",
-            "4.txt","4.txt","4.txt","4.txt",
-            "5.txt","5.txt","5.txt","5.txt",
-            "6.txt","6.txt","6.txt","6.txt",
-            "7.txt","7.txt","7.txt","7.txt"
-            ]
-        all = 28
-        for i in range(all):
-            all -= 1
-            randint = random.randint(0,all)
-            self.randlist.append(temp.pop(randint))
-
-        #
-        # create a board the size specified
-        #
-        self.create_list()
-        #
-        # append lots of lists to self.hash_sort
-        for item in range(self.rows):
-            self.hash_sort.append([])
-        self.hash_original = copy.deepcopy(self.hash_sort)
-        self.colors = {
-            "1.txt": (255,0,0),
-            "2.txt": (255,0,255),
-            "3.txt": (255,255,0),
-            "4.txt": (0,255,255),
-            "5.txt": (0,0,255),
-            "6.txt": (160,160,160),
-            "7.txt": (0,255,0)
-        }
+        self.bag = [] #  a bag of txt's
+        self.randlist = deque() # a deque that handles all the random objects. Has 3 in by default
+        self.maxqueue = maxqueue
 
 
-        self.loadfile2()
+        self.hash = set()    # type:set
+        self.can_rotate = True      # Can rotate
+        self.xs = set()      # type:set
+        #  where x's are on the board, represented as tuples coordinates. Is erased with zero
+        self.zero = ()
+        self.file_name = None
+
+        self.relative = []      # where x's are relative to self.zero. Created every time a new file is loaded
+        self.columns = width    # width of the board. Never changed
+        self.rows = height      # height of the board. Never changed
+        self.file = []          # which tetris piece is loaded
+        self.board = twoDimArray(width,height, start=BetterBoard.Empty) # type: twoDimArray
+        self.color_dict = {}
+
+    def populate_rand(self):
+        while len(self.randlist) < self.maxqueue:
+            if not self.bag:
+                self.bag = copy.deepcopy(BetterBoard.bag)
+            rani = random.randint(0,len(self.bag)-1)
+            print(rani)
+            self.randlist.append(
+                self.bag.pop(rani)
+
+            )
+
+    def _load_file(self):
+        """Loads a file in self.file, taking it off self.randlist"""
+        self.populate_rand()
+        self.file_name = self.randlist.popleft()
+        with open(self.file_name) as f:
+            self.file = list((f.readlines()))
+            for x,i in enumerate(self.file):
+                self.file[x] = i.rstrip('\n')
 
 
-    def loadfile(self, file):  # loads x's and 0's from a file into self.xs and self.zero
-        # clear out the xs and zero and set file to whatever
-        self.delete_x()
-        self.file = file
 
-        # find the width and length of file and se
-        with open(file) as temp:
-            width = len(temp.readline().rstrip())
-        with open(file) as temp:
-            # noinspection PyUnusedLocal
-            height = sum(1 for abc in temp)
-        if height > self.rows or width > self.columns:
-            raise IndexError("File dimensions are too big")
+    def load_part(self):
+        self.can_rotate = False
+        if not self.file:
+            self._load_file()
+        part = self.file.pop()
 
-        offset = int((self.columns - height)/2)
+        middle = self.columns//2
+        insertpoint = middle-len(part)//2
+        for iterate,i in enumerate(part):
+            point = insertpoint+iterate
+            if self.board.get(point,0) != BetterBoard.Empty and i != BetterBoard.Empty:
+                # if the space is not empty and the part is not empty
+                raise Exception("die, Die, DIE!")
+            elif i == BetterBoard.Moving:
+                self.board.set(point, 0, BetterBoard.Moving) # set x and y of board to be that bit
+                self.color_dict[(point, 0)] = self.file_name # set x and y of color dict to be that part
+                self.xs.add((point,0))
+            elif i == BetterBoard.Middle:
+                self.board.set(point,0, BetterBoard.Middle)
+                self.color_dict[(point,0)] = part
+                self.zero = (point,0)
+            elif i == BetterBoard.Empty:
+                pass
 
-        # open file and put x's in it.
-        with open(file) as f:
-            row = -1
-            for line in f:
-                row += 1
-                col = -1
-                for letter in line:
-                    col += 1
-                    coord = (row, col+offset)
-                    if letter == "x":  # if the letter is x, append  a tuple it to .xs
-                        self.test(coord)
-                        self.xs.append(coord)
-                    elif letter == "0":  # do it with 0'x as well
-                        self.test(coord)
-                        self.zero = coord
-            if self.zero:   # if zero exists we create a relative list of tuples
-                for coordinate in self.xs:
-                    self.relative.append((self.zero[0] - coordinate[0], coordinate[1] - self.zero[1]))
-                self.rotate_ok = True
             else:
-                self.zero = ()  #  else, we set it as an empty tuple and turn rotating off
-                self.rotate_ok = False
+                raise Exception(i,'is unexpected')
+        if not self.file:
+            self.can_rotate = True
 
 
-        self.write()
+    # all these tables need to be updated every single move:
+    # x's, hashes, color, list and relative
 
-    def test(self, tuple):
-        if tuple in self.hash:
-            self.gameover = True
+    def drop(self):  # drop the tetromeno down by ONE
+        """Drop all the piece by 1"""
+        if self.xs: # if there is any bits on the board
+            new_xs = set()
+            for item in self.xs:
+                new_xs.add((item[0], item[1]+1))
+                block_color = self.color_dict.pop(item)
 
-    def move(self, string):  # moves the string left or right
-        if string == "r":
-            # create duplicates to test for legality
-            _xs = []
-            for element in self.xs:
-                _xs.append((element[0], element[1] + 1))
-            if not self.zero:
-                if not self.legal(_xs):
-                    self.write()
-                    return True
-                else:
-                    self.xs = _xs
-                    self.write()
-                    return True
+            if self.zero:
+                new_zero = (self.zero[0], self.zero[1]+1)
+                block_color = self.color_dict.pop(self.zero)
+                # then test if it is hitting atnyhgin
+                if self.board.get_tuple(new_zero) == BetterBoard.Solid:
+                    raise Exception(self.zero, 'is zero and hit')
+            # now test for if it is going to hit something
+            for i in new_xs:
+                try:
+                    if self.board.get_tuple(i) == BetterBoard.Solid:
+                        raise Exception(i, 'is full!!!')
+                except IndexError:
+                    raise Exception(i, "is bottom of the board")
 
+            # PASSED ALL THE TEST!
 
-            _zero = (self.zero[0], self.zero[1] + 1)
-            if not self.legal(_xs) or not self.legal(_zero):
-                self.write()
-                return False
+            # finally shift everything down
+            # first delete all original self.x's
+            for i in self.xs:
+                self.remove_item(i)
+            self.xs = new_xs
+            # then set the new self.xs's as x's and update color dict
 
+            if self.zero:
+                # if new_zero is set, then do it else, just leave
+                self.color_dict[new_zero] = block_color
+                self.remove_item(self.zero)
+                self.board.set_tuple_item(BetterBoard.Middle, new_zero)
+                self.zero = new_zero
 
-
-            self.xs = _xs
-            self.zero = _zero
-
-
-        elif string == "l":
-            # create a duplicate.. to test for legality. No
-            _xs = []
-
-            for element in self.xs:
-                _xs.append((element[0], element[1] - 1))
-                if element[1] - 1 == - 1: # make sure the tetromeno doesnt go through the board
-                    self.write()
-                    return False
-
-            if not self.zero:
-                if self.legal(_xs):
-                    self.xs = _xs
-                    self.write()
-                    return True
-                else:
-                    self.write()
-                    return True
-
-            _zero = (self.zero[0], self.zero[1] - 1)
-            if not self.legal(_xs) or not self.legal(_zero):
-                self.write()
-                return False
-            self.xs = _xs
-            self.zero = _zero
-
-        else:
-            return ("String must be 'r' or 'l', " + "not string")
-
-        self.write()
-        return True
-
-    def write(self, string = "l"):  # writes the self.xs and self.zero to self.list. putting in any string makes it silent
-        #  first, destroy self.list
-        self.create_list()
-
-        # and then, put x's in from self.x
-        for element in self.xs:
-            self.list[element[0]][element[1]] = "x"
-
-        # finally!, put the zero in its location
-        if self.zero:  # if it exists
-            self.list[self.zero[0]][self.zero[1]] = "0"
-
-
-        # then, put in the hashes, from self.hash
-        if self.hash:
-            for element in self.hash:
-                self.list[element[0]][element[1]] = "#"
-
-        # FINALLY! NO.2: recreate the relative coordinates in self.relative
-
-        if self.rotate_ok:
-            self.relative = []
-            for coordinate in self.xs:
-                self.relative.append((self.zero[0] - coordinate[0], coordinate[1] - self.zero[1]))
-
-        # and then....
+            for i in new_xs:
+                self.board.set_tuple_item(BetterBoard.Moving, i)
+                self.color_dict[i] = block_color
+        if not self.xs or self.file:
+            self.load_part()
+        # TODO REMOVE!
+        self.display()
+        print()
 
 
 
-        # finally No.3, check if any rows are full!
-        # TODO finish self.delete_rows(), only prints this row is full now.
 
 
-
-        #if string == "l":
-        #print(self)  # TODO PRINT USED FOR DEBUG
-
-    def __str__(self):
-        out = ""
-        for line in self.list:
-            out += "".join(line) + "\n"
-        return out
-
-    def rotate(self, string="r"):  # rotates the board,
+    def regenerate_board(self):
         """
-        if self.file == "1.txt":
-            print(self.xs)
+        Force Regens the board
+        :return: NoneType
         """
+        rows = range(self.rows)
 
-        # first first check if rotating is ok
-        if not self.rotate_ok:
-            self.write()
-            return False
-        # first create a temporary object and check if it is legal
-        temp = []
-        if string == "r":
-            for relative in self.relative:
-                z, y = relative[0], relative[1]
-                temp.append((-y, z))
-        elif string == "l":
-            for relative in self.relative:
-                z, y = relative[0], relative[1]
-                temp.append((y, -z))
+        for row_num in rows:
+            self.board.array[row_num][:] = [BetterBoard.Empty]*self.columns  # set's list to empty
+        for i in self.xs:
+            self.board.set_tuple_item(BetterBoard.Moving, i)
+        for i in self.hash:
+            self.board.set_tuple_item(BetterBoard.Solid , i)
+        if self.zero:
+            self.board.set_tuple_item(BetterBoard.Middle,self.zero)
+
+    def display(self):
+        for i in self.board.array:
+            print(i)
+
+    def remove_item(self, xy):
+        self.board.set_tuple_item(BetterBoard.Empty, xy)
+
+
+    def rotate(self, dir):
+        """
+        Rotates the pieces around
+        :type dir: string
+        """
+        if not self.can_rotate or not self.zero:
+            return "RET"
+        # first make self.relative, a list that shows x's relative to
+        print(self.xs, self.zero, self.can_rotate)
+        relative = [(coordinate[0] - self.zero[0], coordinate[1] - self.zero[1]) for coordinate in self.xs]
+        print(relative)
+        if dir == 'l':
+            new_xs = [better_convert((item[1], -item[0]), self.zero) for item in relative]
+            print(new_xs)
+        elif dir == 'r':
+            new_xs = [better_convert((-item[1], item[0]), self.zero) for item in relative]
+            print(new_xs)
         else:
-            print ("Accepts only 'r' or 'l', not " + string)
+            raise Exception("Accepts only 'r' or 'l', not " + dir)
+        if not self.legal(new_xs):
+            return
+        else:
+            # it's all LEGAL! - remove everything!
+            for i in self.xs:
+                self.remove_item(i)
+                block_color = self.color_dict.pop(i)
 
-        # the temporary object is relative to self.zero, convert it to absolute values
-        _xs = convert(temp, self.zero)  # test if it works
-        # print(temp, "|", _xs)
-        if not self.legal(_xs):
-            self.write()
-            return False
+            for i in new_xs:
+                43uju77
 
-        self.xs = _xs
-        #self.write()
-        self.write()
 
-    def remove_x(self, tuple):
-        el = -1
-        for element in self.xs:
-            el += 1
-            if element == tuple:
-                self.xs.pop(el)
 
     def legal(self, list_of_tuples):
-        if type(list_of_tuples) == tuple:
-            if list_of_tuples[0] > self.rows - 1 or list_of_tuples[1] > self.columns - 1:  # if list of tup is a tuple,
-                return False
-
-            if list_of_tuples in self.hash:
-                return False
-
-            if list_of_tuples[0] < 0 or list_of_tuples[1] < 0:
-                return False
-            return True
-
-        elif type(list_of_tuples) == list:
+        if type(list_of_tuples) == list:
             for element in list_of_tuples:
-                if element[0] > self.rows - 1 or element[1] > self.columns - 1:  # if list of tup is a tuple,
+                if element[0] >= self.columns or element[1] >= self.rows:  # list[10] = 11th element, therefore must be smaller
                     return False
-
-                if element in self.hash:
+                if element in self.hash: # if it hits a hash element
                     return False
-
-                if element [0] < 0 or element[1] < 0:
+                if element [0] < 0 or element[1] < 0: # if it is above/ under
                     return False
             # if it passes every thest
             return True
         else:
             raise ValueError ("Here")
 
-    def drop(self):  # drop the tetromeno down by ONE
-        # create a copy of .xs
-        _xs = []
-        for element in self.xs:
-            _xs.append((element[0] + 1, element[1]))
-
-        if not self.zero:
-            if self.legal(_xs):
-                self.xs = _xs
-            else:
-                self.solidify()
-            self.write()
-            return "Nozero"
-        else:
-            _zero = (self.zero[0] + 1, self.zero[1])
 
 
+if __name__ == '__main__':
+    x = BetterBoard(5,10)
+    x.drop()
+    x.drop()
+    x.drop()
 
-
-        if self.legal(_xs) and self.legal(_zero):  # if the move is not legal for some reason
-            self.zero = _zero
-            self.xs = _xs
-
-        else:
-            self.solidify()
-
-
-
-        self.write()
-
-    def solidify(self):
-        for element in self.xs:
-            self.hash.append((element[0], element[1]))
-        if self.zero:
-            self.hash.append(self.zero)
-        self.delete_x()
-        self.delete_rows()
+    """
+    while True:
+        if x.file or not x.xs:
+            x.load_part()
+        x.display(); input()
+        x.drop()
+        x.regenerate_board()"""
+    z=x.display
 
 
 
 
 
-
-
-        self.loadfile2() # TODO removetthis
-
-    def create_list(self):  # delete the list and re-initializes it. Mainly used in .write()
-        self.list = []
-        for foo in range(self.rows):
-            temp = []
-            for bar in range(self.columns):
-                temp.append(".")
-            self.list.append(temp)
-
-    def delete_x(self):  # deletes the xs and zero
-        self.xs = []
-        self.zero = ()
-
-    def check_touch(self):
-        # first check if it is at the bottom of the grid
-        bottom = self.rows - 1
-        for element in self.xs:
-            if element[0] >= bottom:
-                self.solid_next = True
-                return True
-        if self.zero:
-            if self.zero[0] >= bottom:
-                self.solid_next = True
-                return True
-
-        for element in self.xs:
-            if (element[0] + 1, element[1]) in self.hash:
-                return True
-        if self.zero:
-            if (self.zero[0] + 1, self.zero[1]) in self.hash:
-                return True
-
-
-    def loadfile2(self):
-        self.loadfile(self.randlist.pop(0))  # removes the first element of the list
-
-        if len(self.randlist) == 0:
-            self.randlist = []
-            temp = [
-                "1.txt","1.txt","1.txt","1.txt",
-                "2.txt","2.txt","2.txt","2.txt",
-                "3.txt","3.txt","3.txt","3.txt",
-                "4.txt","4.txt","4.txt","4.txt",
-                "5.txt","5.txt","5.txt","5.txt",
-                "6.txt","6.txt","6.txt","6.txt",
-                "7.txt","7.txt","7.txt","7.txt"
-            ]
-            all = 28
-            for i in range(all):
-                all -= 1
-                randint = random.randint(0,all)
-                self.randlist.append(temp.pop(randint))
-
-
-        if self.randlist:
-            #TODO MAKE THIS WORK ! print("Next shape is", self.randlist[0])
-            self.next = self.randlist[0]
-        else:
-            raise Exception ("WHAT THE HELLLE")
-
-    def delete_rows(self):
-        # first create hash_sort form x.hash
-        self.hash_sort = copy.deepcopy(self.hash_original)
-        for element in self.hash:
-            self.hash_sort[element[0]].append(element)
-        del element
-
-        row = - 1
-        for element in self.hash_sort:
-            row += 1
-            if len(element) == 10:
-                # increase the score by one
-                self.score += 1
-                # erase the row into a list
-                self.hash_sort[row] = []
-                #  now update self.hash from self.hash_sort
-                self.hash = []
-                for element5 in self.hash_sort:
-                    if element5:
-                        for element6 in element5:
-                            self.hash.append(element6)
-                # then finally move all the hashes down
-                temp = []
-                for bar in self.hash:
-                    if bar[0] < row:
-                        temp.append((bar[0]+1, bar[1]))
-                    else:
-                        temp.append(bar)
-                self.hash = copy.deepcopy(temp)
-                del temp
-
-                # finally recreate hash_sort #again...
-                self.hash_sort = copy.deepcopy(self.hash_original)
-                for element2 in self.hash:
-                    self.hash_sort[element2[0]].append(element2)
-        self.write("s")
-
-    def drop_down(self):
-        _n = False
-        while True:
-            if self.check_touch():
-                _n = True
-            if _n:
-                self.drop()
-                break
-            self.drop()
-
+    #x.drop()
+    #x.drop()
+    #x.rotate('r')
+    #x.drop()
+    #z()
 
 
 
