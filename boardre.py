@@ -54,7 +54,7 @@ class BetterBoard:
         self.bag = [] #  a bag of txt's
         self.randlist = deque() # a deque that handles all the random objects. Has 3 in by default
         self.maxqueue = maxqueue
-
+        self.redraw = deque()
 
         self.hash = set()    # type:set
         self.can_rotate = True      # Can rotate
@@ -120,56 +120,69 @@ class BetterBoard:
         if not self.file:
             self.can_rotate = True
 
-
     # all these tables need to be updated every single move:
     # x's, hashes, color, list and relative
 
     def drop(self):  # drop the tetromeno down by ONE
         """Drop all the piece by 1"""
-        if self.xs: # if there is any bits on the board
+        if self.xs: # first do testing!!!
             new_xs = set()
             for item in self.xs:
                 new_xs.add((item[0], item[1]+1))
-                block_color = self.color_dict.pop(item)
 
             if self.zero:
                 new_zero = (self.zero[0], self.zero[1]+1)
-                block_color = self.color_dict.pop(self.zero)
-                # then test if it is hitting atnyhgin
-                if self.board.get_tuple(new_zero) == BetterBoard.Solid:
-                    raise Exception(self.zero, 'is zero and hit')
-            # now test for if it is going to hit something
-            for i in new_xs:
-                try:
-                    if self.board.get_tuple(i) == BetterBoard.Solid:
-                        raise Exception(i, 'is full!!!')
-                except IndexError:
-                    raise Exception(i, "is bottom of the board")
+                # then test if it is hitting anything
+                if not self.legal(new_zero):
+                    self.solidify()
+                    # TODO REMOVE
+                    self.display()
+                    return False
 
-            # PASSED ALL THE TEST!
+            # now test for if it is going to hit something
+            if not self.legal(new_xs):
+                self.solidify()
+                return False
+
+            # PASSED ALL THE TEST! - change the colors a bit
+            for item in self.xs:
+                block_color = self.color_dict.pop(item)
+            if self.zero:
+                block_color = self.color_dict.pop(self.zero)
 
             # finally shift everything down
             # first delete all original self.x's
             for i in self.xs:
                 self.remove_item(i)
-            self.xs = new_xs
             # then set the new self.xs's as x's and update color dict
 
             if self.zero:
                 # if new_zero is set, then do it else, just leave
                 self.color_dict[new_zero] = block_color
                 self.remove_item(self.zero)
-                self.board.set_tuple_item(BetterBoard.Middle, new_zero)
+                self.add_middle(new_zero)
                 self.zero = new_zero
 
             for i in new_xs:
-                self.board.set_tuple_item(BetterBoard.Moving, i)
+                self.add_moving(i)
                 self.color_dict[i] = block_color
+
+            self.xs = new_xs
         if not self.xs or self.file:
             self.load_part()
         # TODO REMOVE!
         self.display()
         print()
+
+    def solidify(self):
+        for item in self.xs:
+            self.hash.add(item)
+            self.add_hash(item)
+        if self.zero:
+            self.hash.add(self.zero)
+            self.add_hash(self.zero)
+            self.zero = ()
+        self.xs = set()
 
     def regenerate_board(self):
         """
@@ -195,9 +208,16 @@ class BetterBoard:
         """Removes the item from board"""
         self.board.set_tuple_item(BetterBoard.Empty, xy)
 
-    def add_item(self,xy,item=Moving):
-        """Adds the item to the board"""
-        self.board.set_tuple_item(item, xy)
+    def add_moving(self, xy):
+        """Adds moving to the board"""
+        self.board.set_tuple_item(BetterBoard.Moving, xy)
+
+    def add_middle(self, xy):
+        self.board.set_tuple_item(BetterBoard.Middle, xy)
+
+    def add_hash(self, xy):
+        self.board.set_tuple_item(BetterBoard.Solid, xy)
+
 
     def rotate(self, dir='r'):
         """
@@ -222,7 +242,7 @@ class BetterBoard:
             self.remove_item(i)
             block_color = self.color_dict.pop(i)
         for i in new_xs:
-            self.add_item(i)
+            self.add_moving(i)
             self.color_dict[i] = block_color
         self.xs = new_xs
 
@@ -263,6 +283,7 @@ class BetterBoard:
         else:
             raise Exception("Accepts only 'r' or 'l', not " + dir)
         print(new_xs, new_zero)
+
         if not self.legal(new_xs):
             return "UIN:G"
         if self.zero:
@@ -276,9 +297,9 @@ class BetterBoard:
             self.remove_item(self.zero)
             block_color = self.color_dict.pop(self.zero)
             self.color_dict[new_zero] = block_color
-            self.add_item(new_zero, BetterBoard.Middle)
+            self.add_moving(new_zero, BetterBoard.Middle)
         for i in new_xs:
-            self.add_item(i)
+            self.add_moving(i)
             self.color_dict[i] = block_color
         self.xs = new_xs
         self.zero = new_zero
@@ -286,12 +307,12 @@ class BetterBoard:
         self.display()
 
 
+
+
 if __name__ == '__main__':
     x = BetterBoard(5,10)
-    x.drop()
-    x.drop()
-    x.drop()
-
+    a = x.rotate
+    d = x.drop
     """
     while True:
         if x.file or not x.xs:
