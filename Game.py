@@ -139,6 +139,7 @@ while True:
 
     #pygame.draw.rect(screen,(255,0,0),
     for event in pg.event.get():
+        print(x.color_dict)
 
         if event.type == KEYDOWN:
             if event.key == K_ESCAPE:

@@ -112,7 +112,7 @@ class BetterBoard:
                 self.xs.add((point,0))
             elif i == BetterBoard.Middle:
                 self.board.set(point,0, BetterBoard.Middle)
-                self.color_dict[(point,0)] = part
+                self.color_dict[(point,0)] = self.file_name
                 self.zero = (point,0)
             elif i == BetterBoard.Empty:
                 pass
@@ -137,8 +137,6 @@ class BetterBoard:
                 # then test if it is hitting anything
                 if not self.legal(new_zero):
                     self.solidify()
-                    # TODO REMOVE
-                    self.display()
                     return False
 
             # now test for if it is going to hit something
@@ -172,9 +170,6 @@ class BetterBoard:
             self.xs = new_xs
         if not self.xs or self.file:
             self.load_part()
-        # TODO REMOVE!
-        self.display()
-        print()
 
     def solidify(self):
         for item in self.xs:
@@ -280,8 +275,6 @@ class BetterBoard:
             raise ValueError ("NOT A LIST?")
 
     def move(self, dir='r'):
-        if not self.can_rotate or not self.zero:
-            return "RET"
         if dir == 'l':
             new_xs = {(item[0]-1, item[1]) for item in self.xs}
             if self.zero:
@@ -292,7 +285,6 @@ class BetterBoard:
                 new_zero = self.zero[0]+1, self.zero[1]
         else:
             raise Exception("Accepts only 'r' or 'l', not " + dir)
-        print(new_xs, new_zero)
 
         if not self.legal(new_xs):
             return "UIN:G"
@@ -308,13 +300,12 @@ class BetterBoard:
             block_color = self.color_dict.pop(self.zero)
             self.color_dict[new_zero] = block_color
             self.add_middle(new_zero)
+            self.zero = new_zero
         for i in new_xs:
             self.add_moving(i)
             self.color_dict[i] = block_color
         self.xs = new_xs
-        self.zero = new_zero
-        # TODO REMOVE!
-        self.display()
+
 
     def drop_down(self):
         oldlen = len(self.hash)
