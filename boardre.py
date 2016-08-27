@@ -1,5 +1,6 @@
 import random
 import copy
+import constants
 from collections import deque
 from Board import twoDimArray
 try:
@@ -7,7 +8,8 @@ try:
     log = True
 except ImportError:
     log = False
-
+class GameOverException(Exception):
+    pass
 
 def convert(list_of_tuples, zero):  #
     """converts a relative value to zero to an absolute one"""
@@ -37,15 +39,27 @@ class BetterBoard:
         "6.txt","6.txt","6.txt","6.txt",
         "7.txt","7.txt","7.txt","7.txt"
     ]
+    #print("EASY BAG!")
+    '''
+    bag = [
+        "1.txt","1.txt","1.txt","1.txt",
+        "2.txt","2.txt","2.txt","2.txt",
+        "3.txt","3.txt","3.txt","3.txt",
+        "4.txt","4.txt","4.txt","4.txt",
+        "1.txt","1.txt","1.txt","1.txt",
+        "6.txt","6.txt","6.txt","6.txt",
+        "1.txt","1.txt","1.txt","1.txt"
+    ]
+    '''
 
     Colors = {
-        "1.txt": (255,0,0),
-        "2.txt": (255,0,255),
-        "3.txt": (255,255,0),
-        "4.txt": (0,255,255),
-        "5.txt": (0,0,255),
-        "6.txt": (160,160,160),
-        "7.txt": (0,255,0)
+        "1.txt": constants.pink,
+        "2.txt": constants.yellow,
+        "3.txt": constants.yellow,
+        "4.txt": constants.dark_blue,
+        "5.txt": constants.red,
+        "6.txt": constants.plurple,
+        "7.txt": constants.red
     }
 
     def __init__(self, width, height, maxqueue = 3):
@@ -63,6 +77,7 @@ class BetterBoard:
         #  where x's are on the board, represented as tuples coordinates. Is erased with zero
         self.zero = ()
         self.file_name = None
+        self.insertion_offset = 0 # the offset when inserting
 
         self.relative = []      # where x's are relative to self.zero. Created every time a new file is loaded
         self.columns = width    # width of the board. Never changed
@@ -84,6 +99,7 @@ class BetterBoard:
 
     def _load_file(self):
         """Loads a file in self.file, taking it off self.randlist"""
+        self.insertion_offset = 0
         self.populate_rand()
         self.file_name = self.randlist.popleft()
         with open(self.file_name) as f:
@@ -100,12 +116,12 @@ class BetterBoard:
         part = self.file.pop()
 
         middle = self.columns//2
-        insertpoint = middle-len(part)//2
+        insertpoint = middle-len(part)//2 + self.insertion_offset
         for iterate,i in enumerate(part):
             point = insertpoint+iterate
             if self.board.get(point,0) != BetterBoard.Empty and i != BetterBoard.Empty:
                 # if the space is not empty and the part is not empty
-                raise Exception("die, Die, DIE!")
+                raise GameOverException
             elif i == BetterBoard.Moving:
                 self.board.set(point, 0, BetterBoard.Moving) # set x and y of board to be that bit
                 self.color_dict[(point, 0)] = self.file_name # set x and y of color dict to be that part
@@ -172,6 +188,8 @@ class BetterBoard:
             self.load_part()
 
     def solidify(self):
+        if self.file: # stuff stuck in the file, mean you die!
+            raise GameOverException
         for item in self.xs:
             self.hash.add(item)
             self.add_hash(item)
@@ -183,9 +201,34 @@ class BetterBoard:
         self.delete_rows()
 
     def delete_rows(self):
-        for line in self.board.getArray():
-            if line == self.full_line:
-                print("IJFLAJFKLASJLFJALSJKLFJLASJFJLASJFL")
+        deleted = [x for x,line in enumerate(self.board.getArray()) if line == self.full_line]
+        if deleted:
+            smallest = min(deleted)
+
+
+            new = {}
+            length = len(deleted)
+            for item in self.color_dict: # change the colors!
+                x,y = item
+                if y < smallest: # its above
+                    new[(x,y+length)] = self.color_dict[item]
+                    print(item, ">>", (x,y+length))
+                elif y in deleted: # the row of deleting
+                    pass
+                else: # esle its below
+                    new[item] = self.color_dict[item]
+            print(new)
+            print(self.color_dict)
+            self.color_dict = new
+            self.hash = {(x[0],x[1]+length) for x in self.hash if not x[1] in deleted}
+            print(self.hash)
+            self.regenerate_board()
+            print("EYLMAO", new)
+
+
+
+
+
 
 
     def regenerate_board(self):
@@ -238,7 +281,7 @@ class BetterBoard:
         elif dir == 'r':
             new_xs = {better_convert((-item[1], item[0]), self.zero) for item in relative}
         else:
-            raise Exception("Accepts only 'r' or 'l', not " + dir)
+            raise SystemExit("ARRGS")
         if not self.legal(new_xs):
             return
 
@@ -266,7 +309,7 @@ class BetterBoard:
         elif type(list_of_tuples) == tuple:
             if list_of_tuples[0] >= self.columns or list_of_tuples[1] >= self.rows:
                 return False
-            if list_of_tuples in self.hash:  # if it hits a hash element
+            if list_of_tuples in self.hash:  # if it hits a hash elementmo
                 return False
             if list_of_tuples[0] < 0 or list_of_tuples[1] < 0:  # if it is above/ under
                 return False
@@ -279,10 +322,22 @@ class BetterBoard:
             new_xs = {(item[0]-1, item[1]) for item in self.xs}
             if self.zero:
                 new_zero = self.zero[0]-1, self.zero[1]
+            if self.file: # the file is only half loaded
+                insertpoint = (self.columns//2)-len(self.file[-1])//2
+                if not (0 <= insertpoint+self.insertion_offset-1 < self.columns):
+                    return False
+                self.insertion_offset -= 1
+
         elif dir == 'r':
             new_xs = {(item[0]+1, item[1]) for item in self.xs}
             if self.zero:
                 new_zero = self.zero[0]+1, self.zero[1]
+            if self.file: # the file is only half loaded
+                insertpoint = (self.columns//2)-len(self.file[-1])//2
+                if not (0 <= insertpoint+self.insertion_offset+(len(self.file[-1])) < self.columns):
+                    return False
+                self.insertion_offset += 1
+
         else:
             raise Exception("Accepts only 'r' or 'l', not " + dir)
 
@@ -314,7 +369,7 @@ class BetterBoard:
 
 
 if __name__ == '__main__':
-    x = BetterBoard(5,10)
+    x = BetterBoard(5,20)
     a = x.rotate
     d = x.drop
     """
@@ -324,7 +379,7 @@ if __name__ == '__main__':
         x.display(); input()
         x.drop()
         x.regenerate_board()"""
-    z=x.display
+    def z(): x.drop(); x.display()
 
 
 
