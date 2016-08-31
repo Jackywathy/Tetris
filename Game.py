@@ -3,6 +3,18 @@ from constants import *
 from pygame.locals import *
 #os.chdir("/Users/jackjiang/Desktop/Tetris")
 
+def title_screen():
+    global screen
+    screen.fill((255,255,255))
+    screen.blit(fontObj.render("TETRIS",True, darkpurple), (190,180))
+    screen.blit(fontObj.render("Press Space to Start",True, darkpurple), (100,280))
+    pg.display.update()
+    while True:
+        for i in pg.event.get():
+            if i.type == KEYDOWN and i.key == K_SPACE:
+                return
+            if i.type == KEYDOWN and i.key == K_ESCAPE:
+                sys.exit(-1)
 gameover = False
 
 pg.init()
@@ -43,17 +55,15 @@ def show_score():
 pg.mouse.set_visible(False)
 pg.display.set_caption("Tetris")
 fpsClock = pg.time.Clock()
-screen = pg.display.set_mode((500, 700))
-screen.fill(aqua)
+screen = pg.display.set_mode((500, 700))#,pg.FULLSCREEN)
+
+
+
+
 border = pg.Rect(88,28,323,643)
 inside_border = pg.Rect(90,30,319,639)
 next_shape = pg.Rect(435,49,40,40)
-next_shape_inside = pg.Rect
-pg.draw.rect(screen, darkpurple, border, 2)
-pg.draw.rect(screen, darkpurple, next_shape, 1)
 
-render = fontObj4.render("Next Shape", True, darkpurple)
-screen.blit(render, (428,20))
 
 pg.display.update()
 picture = pg.image.load("dog1.jpeg")
@@ -62,7 +72,7 @@ picture = pg.transform.scale(picture, (135,90))
 
 
 #print(os.listdir())
-x = boardre.BetterBoard(10, 20)
+
 
 _square = pg.Rect(420,100, 100,30)
 
@@ -80,18 +90,12 @@ def render_next_shape(item):
 
 
 def update_graphics():
-
-
-
     rand = 0
     global screen
     global fps
     global _square
     if x.randlist:
         render_next_shape(x.randlist[0])
-    ren = fontObj.render(str(round(fps,1)), True, darkpurple)
-
-
     screen.fill((255,255,255), inside_border)
     height1 = -2
     for y_,element in enumerate(x.board.array):
@@ -112,85 +116,101 @@ def update_graphics():
 
                 pg.draw.rect(screen, black, box_border, 1)
     screen.fill(aqua, _square)
-    screen.blit(ren, (420,100))
     # create a next shape
 
-fps = 0
-pg.event.clear()
-update_graphics()
-y = 0
-norotate = 0 # frames before being allowed to rotate
-nospam = 0 # frames before being allowed to press space again
+x = boardre.BetterBoard(10, 20)
 
-pg.key.set_repeat(2,100)
-try:
-    while True:
-
-        # noinspection PyRedeclaration
-        fps = (fpsClock.get_fps())
-
-        # draw.rect(screen, color, (wdith from left side, width from top side, width of rect, height of rect
-        y += 1
-        if y > 15:
-            y = 0
-            x.drop()
-            update_graphics()
-
-        if x.gameover:
-            print("GAMEMOVER!")
-            show_score()
-            pg.quit()
-            sys.exit()
+def main():
+    x = boardre.BetterBoard(10, 20)
+    screen.fill((255,255,255))
+    title_screen()
+    pg.draw.rect(screen, darkpurple, border, 2)
+    pg.draw.rect(screen, darkpurple, next_shape, 1)
 
 
-        #pygame.draw.rect(screen,(255,0,0),
-        for event in pg.event.get():
+    screen.fill(aqua)
+    render = fontObj4.render("Next Shape", True, darkpurple)
+    screen.blit(render, (428,20))
 
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    print("QUITTING")
-                    print("SCORE =", x.score)
-                    show_score()
-                    pg.quit()
-                    sys.exit()
-                elif event.key == K_a or event.key == K_LEFT: # = a
-                    x.move("l")
-                    update_graphics()
-                elif event.key == K_d or event.key == K_RIGHT: # = d
-                    x.move("r")
-                    update_graphics()
-                elif event.key == K_j or event.key == K_q: # = j
-                    if norotate:
-                        continue
-                    x.rotate("l")
-                    update_graphics()
-                    norotate = 3
-                elif event.key == K_l or event.key == K_e or event.key == K_UP:  # = e
-                    if norotate:
-                        print("nope")
-                        continue
-                    print("ere")
-                    x.rotate("r")
-                    update_graphics()
-                    norotate = 3
-                elif event.key == K_SPACE or event.key == K_RETURN: # = space
-                    if nospam:
-                        continue
-                    x.drop_down()
-                    update_graphics()
-                    nospam = 10
-                elif event.key == K_s or event.key == K_DOWN: # s
-                    x.drop()
-                    update_graphics()
-                else:
-                    print(event.key)
-        pg.display.update()
-        fpsClock.tick(20)
-        if norotate:
-            norotate -= 1
-        if nospam:
-            nospam -= 1
+    fps = 0
+    pg.event.clear()
+    y = 0
+    norotate = 0 # frames before being allowed to rotate
+    nospam = 0 # frames before being allowed to press space again
+    update_graphics()
+    pg.key.set_repeat(2,100)
+    try:
+        while True:
 
-except boardre.GameOverException:
-    show_score()
-    raise
+            # noinspection PyRedeclaration
+            fps = (fpsClock.get_fps())
+
+            # draw.rect(screen, color, (wdith from left side, width from top side, width of rect, height of rect
+            y += 1
+            if y > 15:
+                y = 0
+                x.drop()
+                update_graphics()
+
+            if x.gameover:
+                print("GAMEMOVER!")
+                show_score()
+                pg.quit()
+                sys.exit()
+
+
+            #pygame.draw.rect(screen,(255,0,0),
+            for event in pg.event.get():
+
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        print("QUITTING")
+                        print("SCORE =", x.score)
+                        show_score()
+                        pg.quit()
+                        raise boardre.GameOverException
+                    elif event.key == K_a or event.key == K_LEFT: # = a
+                        x.move("l")
+                        update_graphics()
+                    elif event.key == K_d or event.key == K_RIGHT: # = d
+                        x.move("r")
+                        update_graphics()
+                    elif event.key == K_j or event.key == K_q: # = j
+                        if norotate:
+                            continue
+                        x.rotate("l")
+                        update_graphics()
+                        norotate = 3
+                    elif event.key == K_l or event.key == K_e or event.key == K_UP:  # = e
+                        if norotate:
+                            print("nope")
+                            continue
+                        print("ere")
+                        x.rotate("r")
+                        update_graphics()
+                        norotate = 3
+                    elif event.key == K_SPACE or event.key == K_RETURN: # = space
+                        if nospam:
+                            continue
+                        x.drop_down()
+                        update_graphics()
+                        nospam = 10
+                    elif event.key == K_s or event.key == K_DOWN: # s
+                        x.drop()
+                        update_graphics()
+                    else:
+                        print(event.key)
+            pg.display.update()
+            fpsClock.tick(20)
+            if norotate:
+                norotate -= 1
+            if nospam:
+                nospam -= 1
+            print("UPDATE")
+            print(x.board.getArray())
+
+    except boardre.GameOverException:
+        show_score()
+        raise
+
+main()

@@ -86,3 +86,10 @@ def bin_search(sortedlist, item):
     return found
 
 
+with open('input.txt','r',encoding='UTF8') as f:
+    length = int(f.readline())
+    for line in f:
+        ...
+with open("out.txt", 'w', encoding='UTF8') as f:
+    ...
+
